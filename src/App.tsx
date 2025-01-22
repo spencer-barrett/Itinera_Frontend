@@ -1,25 +1,36 @@
-import  { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./auth/Login.jsx";
-import Home from "./routes/Home.jsx"; // Example for a protected route
-import { observeUser } from "./auth/auth.js";
+import Login from "./auth/Login";
+import Home from "./routes/Home"; // Ensure Home has the correct props
+import { observeUser } from "./auth/auth";
 
-const App = () => {
-    const [user, setUser] = useState(null);
-    const [idToken, setIdToken] = useState(null);
+interface User {
+    email: string | null;
+    [key: string]: unknown;
+}
+
+interface UserState {
+    user: User;
+    idToken?: string;
+}
+
+const App: React.FC = () => {
+    const [user, setUser] = useState<User | null>(null);
+    const [idToken, setIdToken] = useState<string | null>(null);
 
     useEffect(() => {
-        // Observe user authentication state
-        observeUser((userState) => {
+        const unsubscribe = observeUser((userState: UserState | null) => {
             if (userState) {
                 setUser(userState.user);
-                setIdToken(userState.idToken);
+                setIdToken(userState.idToken || null);
                 console.log("user id", userState.idToken);
             } else {
                 setUser(null);
                 setIdToken(null);
             }
         });
+
+        return () => unsubscribe();
     }, []);
 
     return (
@@ -32,7 +43,7 @@ const App = () => {
                 path="/"
                 element={
                     user ? (
-                        <Home user={user} idToken={idToken} />
+                        <Home user={user} idToken={idToken} /> // Ensure props are passed correctly
                     ) : (
                         <Navigate to="/login" replace />
                     )

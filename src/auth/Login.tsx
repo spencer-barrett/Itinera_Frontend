@@ -1,32 +1,35 @@
-import  { useState, useEffect } from "react";
-import { signIn, logOut, observeUser } from "./auth";
+import React, { useState, FormEvent } from "react";
+import { signIn, logOut } from "./auth";
+import useAuthState from "./useAuthState";
 
-const Login = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [user, setUser] = useState(null);
+interface User {
+    email: string | null;
+    [key: string]: unknown; // Add additional optional fields if needed
+}
 
-    useEffect(() => {
-        // Observe user authentication state
-        observeUser((userState) => {
-            setUser(userState?.user || null);
-        });
-    }, []);
+const Login: React.FC = () => {
+    const [email, setEmail] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
+    const user = useAuthState(); // Get the user state from the custom hook
 
-    const handleSignIn = async (e) => {
+    const handleSignIn = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
         try {
             const idToken = await signIn(email, password);
             console.log("ID Token:", idToken);
             alert("Signed in successfully!");
         } catch (error) {
-            alert("Error signing in: " + error.message);
+            alert("Error signing in: " + (error as Error).message);
         }
     };
 
-    const handleLogOut = async () => {
-        await logOut();
-        alert("Signed out successfully!");
+    const handleLogOut = async (): Promise<void> => {
+        try {
+            await logOut();
+            alert("Signed out successfully!");
+        } catch (error) {
+            alert("Error signing out: " + (error as Error).message);
+        }
     };
 
     return (
